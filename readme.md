@@ -8,44 +8,44 @@ I've included [NGinx config examples](nginx) as well.
 
 ### Options
 
-- --account-key
+- **--account-key**
 
    The path for your Let's Encrypt account key.
    Will be created if doesn't exist.
 
-- --acmetiny
+- **--acmetiny**
 
    The path where [acme-tiny](https://github.com/diafygi/acme-tiny) is stored.
    Will be dowloaded if doesn't exist.
 
-- --keys
+- **--keys**
 
    Where to store keys and certificates
 
-- --challenges
+- **--challenges**
 
    Where to store challenges.
 
-- --domain1
+- **--domain1**
 
    The ain domain name.
 
-- --domain2
+- **--domain2**
 
    An additional domain name.
    To use it, check and fill [openssl.cnf](openssl.cnf.example).
    `Warning: not tested too much!`
 
-- --keyname 
+- **--keyname**
 
    The basename for the key and certificate files.
    If not specified — domain name will be used.
 
-- --nodhparam 
+- **--nodhparam**
 
    skip `dhparam` file creation _(not recommended)_.
 
-- --no-questions 
+- **--no-questions**
 
    Don't ask questions.
    Use it if you put this script in crontab.
