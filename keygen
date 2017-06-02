@@ -1,0 +1,332 @@
+#!/usr/bin/env bash
+
+for i in "$@"
+do
+case $i in
+	--account-key=*)
+		accountkey="${i#*=}"
+		shift
+	;;
+	--acmetiny=*)
+		acmetinydir="${i#*=}"
+		shift
+	;;
+	--keys=*)
+		keysdir="${i#*=}"
+		shift
+	;;
+	--challenges=*)
+		challengesdir="${i#*=}"
+		shift
+	;;
+	--domain1=*)
+		domain1="${i#*=}"
+		shift
+	;;
+	--domain2=*)
+		domain2="${i#*=}"
+		shift
+	;;
+	--keyname=*)
+		keyname="${i#*=}"
+		shift
+	;;
+	--nodhparam=*)
+		nodhparam="${i#*=}"
+		shift
+	;;
+	--no-questions)
+		noquestions='true'
+		shift
+	;;
+	*)
+		echo 'Something wrong with options. Terminating.'
+		exit 0
+	;;
+esac
+done
+
+if [ -z "${accountkey}" ] && [ -z "${noquestions}" ]
+then
+	echo 'Please specify the path to your account key: '
+	read accountkey
+fi
+
+if [ ! -f "${accountkey}" ]
+then
+	echo 'Warning!'
+	echo '  Can`t find account.key file.'
+
+	if [ -z "${noquestions}" ]
+	then
+		echo '  Fortunately, I can try to create it now. Should I? [y/n]'
+		read answer
+		case $answer in
+			[yY]* ) echo 'Okay. Working...'
+				echo '... writing key to ' ${accountkey} '...'
+				openssl genrsa 4096 > ${accountkey}
+
+				if [ ! -f ${accountkey} ]
+				then
+					echo 'Can`t create account key. Terminating.'
+					exit 0
+				fi
+
+				echo 'Done.';;
+
+			[nN]* ) echo 'Okay. Terminating.'; exit 0;;
+			* ) echo 'Next time, please type Y or N! Bye'; exit 0;;
+		esac
+	else
+		echo 'No questions mode. Terminating.'
+		exit 0
+	fi
+else
+	echo ' --- Account key found!'
+fi
+
+
+if [ -z "${acmetinydir}" ]
+then
+	echo 'Please, specify the path to acme_tiny: '
+	read acmetinydir
+fi
+
+acmetiny="${acmetinydir}/acme_tiny.py"
+
+if [ ! -f "${acmetiny}" ]
+then
+	echo 'Warning!'
+	echo "  Can't find 'acme_tiny' script!"
+	echo '  Please, make sure it can be found here: '
+	echo "	${acmetiny}"
+	echo '  You can get it here: https://github.com/diafygi/acme-tiny'
+	echo ''
+
+	if [ -z "${noquestions}" ]
+	then
+		echo 'Luckily, I can try to get it now for you. Should I? [y/n] '
+		read answer
+		case $answer in
+			[yY]* ) echo 'Okay. Working...'
+				if [ ! -d "${acmetinydir}" ]
+				then
+					echo ${acmetinydir} 'does not exist. Creating...'
+					mkdir ${acmetinydir}
+
+					if [ ! -d "${acmetinydir}" ]
+					then
+						echo 'Can`t create `'${acmetinydir}'`. Seems like the parent dir does not exist. Terminating.'
+						exit 0
+					fi
+				fi
+
+				git clone https://github.com/diafygi/acme-tiny ${acmetinydir}
+
+				if [ ! -f "${acmetiny}" ]
+				then
+					echo '... can`t get acme_tiny. Terminating.'
+					exit 0
+				else
+					echo '... success!'
+				fi
+				;;
+
+			[nN]* ) echo 'Okay. Terminating'; exit 0;;
+			* ) echo 'Next time please type Y or N! Bye.'; exit 0;;
+		esac
+	else
+		echo 'No questions mode. Terminating.'
+		exit 0
+	fi
+else
+	echo ' --- acme_tiny found!'
+fi
+
+
+if [ -z "${keysdir}" ] && [ -z "${noquestions}" ]
+then
+	echo 'Please, specify where to store your keys: '
+	read keysdir
+fi
+
+if [ ! -d "${keysdir}" ]
+then
+	echo 'Error.'
+	echo `realpath ${keysdir}`
+
+	if [ -z "${noquestions}" ]
+	then
+		echo 'I could try to create this directory for you. Should I? [y/n]'
+		read answer
+		case $answer in
+			[yY]* ) echo 'Ok. I`m trying...'
+				mkdir ${keysdir}
+				if [ ! -d "${keysdir}" ]
+				then
+					echo '... fail. Sorry. Next time try something else. Bye.'
+					exit 0;
+				else
+					echo '.... success!'
+				fi
+				;;
+			[nN]* ) echo 'Okay. Terminating.'; exit 0;;
+			* ) echo 'Next time please type Y or N! Bye.'; exit 0;;
+		esac
+	else
+		echo 'No questions mode. Terminating.'
+		exit 0
+	fi
+else
+	echo ' --- Keys dir found!'
+fi
+
+
+if [ -z "${challengesdir}" ] && [ -z "${noquestions}" ]
+then
+	echo 'Please, specify where to store challenge files: '
+	read challengesdir
+fi
+
+if [ ! -d "${challengesdir}" ]
+then
+	echo 'Error.'
+	echo `realpath ${challengesdir}`
+
+	if [ -z "${noquestions}" ]
+	then
+		echo 'I could try to create this directory for you. Should I? [y/n]'
+		read answer
+		case $answer in
+			[yY]* ) echo 'Ok. I`m trying...'
+				mkdir ${challengesdir}
+				if [ ! -d "${challengesdir}" ]
+				then
+					echo '... fail. Sorry. Next time try something else. Bye.'
+					exit 0;
+				else
+					echo '.... success!'
+				fi
+				;;
+			[nN]* ) echo 'Okay. Terminating.'; exit 0;;
+			* ) echo 'Next time please type Y or N! Bye.'; exit 0;;
+		esac
+	else
+		echo 'No questions mode. Terminating.'
+		exit 0
+	fi
+else
+	echo ' --- Challendes dir found!'
+fi
+
+if [ -z "${domain1}" ]
+then
+	echo 'Please, specify the domain you want to secure (max - 2, then separate them by a space): '
+	read domain1 domain2
+fi
+
+if [ -z "${keyname}" ]
+then
+	echo "Key name is not set, using domain name for key name: ${domain1}"
+	keyname="${domain1}"
+fi
+
+
+echo "account key:  ${accountkey}"
+echo "acme-tiny:    ${acmetiny}"
+echo "keys:         ${keysdir}"
+echo "challenges:   ${challengesdir}"
+echo "domain1:      ${domain1}"
+echo "domain2:      ${domain2}"
+echo "key name:		${keyname}"
+echo "no dhparam:	${nodhparam}"
+echo "no questions: ${noquestions}"
+
+
+if [ -z "${noquestions}" ]
+then
+	echo ' --- Now, all options are set and we`re ready to do some work. Continue? [y/n]'
+	read answer
+	case $answer in
+		[yY]* ) echo 'Ok.';;
+		[nN]* ) echo 'Okay. Terminating.'; exit 0;;
+		* ) echo 'Next time please type Y or N! Bye.'; exit 0;;
+	esac
+	echo ''
+fi
+
+
+if [ ! -f "${keysdir}/${keyname}.key" ]
+then
+	echo ' --- Generating new domain key ('${keysdir}/${keyname}.key')...'
+	openssl genrsa 4096 > ${keysdir}/${keyname}.key
+	echo '... done.'
+else
+	echo ' --- Domain key already exists. Skipping.'
+fi
+
+
+if [ ! -f "${keysdir}/${keyname}.csr" ]
+then
+	if [ ! -z "${domain2}" ]
+	then
+		echo ' --- Generating csr for both domains...'
+		openssl req -new -sha256 -key "${keysdir}/${keyname}.key" -subj "/" -reqexts SAN -config <(cat ./openssl.cnf <(printf "[SAN]\nsubjectAltName=DNS:${domain1},DNS:${domain2}")) > ${keysdir}/${keyname}.csr
+		echo '... done.'
+	else
+		echo ' --- Generating csr for one domain...'
+		openssl req -new -sha256 -key "${keysdir}/${keyname}.key" -subj "/CN=${domain1}" > ${keysdir}/${keyname}.csr
+		echo '... done.'
+	fi
+else
+	echo ' --- Domain csr already exists. Skipping.'
+fi
+
+
+if [ -z "${noquestions}" ]
+then
+	echo ' --- We`re ready to request your certificate.'
+	echo 'Please, make sure the `'${challengesdir}'` is accessible on your site as `http://'${domain1}'/.well-known/acme-challenge/` (using all indicated domains).'
+	echo 'When you`re done with nginx, hit Enter to continue...'
+	read
+fi
+
+
+if [ ! -f "${keysdir}/${keyname}.crt" ]
+then
+	echo ' --- Backing up your old certificate...'
+	cp ${keysdir}/${keyname}.crt ${keysdir}/${keyname}.crt.bak
+fi
+
+echo ' --- Requesting certificate...'
+# this should exit script if no update is required
+python2 ${acmetiny} --account-key ${accountkey} --csr "${keysdir}/${keyname}.csr" --acme-dir ${challengesdir} > ${keysdir}/${keyname}.crt || exit 1
+echo '... done.'
+
+
+#intermediate certificate
+
+echo ' --- Downloading latest letsencrypt`s intermediate.pem...'
+wget -O - https://acme-v01.api.letsencrypt.org/acme/issuer-cert | openssl x509 -inform der -outform pem -out ${keysdir}/le-intermediate.pem
+echo '... done.'
+
+echo ' --- Adding intermediate.pem to your cert...'
+cat ${keysdir}/le-intermediate.pem >> ${keysdir}/${keyname}.crt
+echo '... done.'
+
+
+# It's ok to regenerate it from time to time, but it takes too much time to generate, so let's do it only if file does not exist.
+if [ ! -f "${keysdir}/dhparam" ] && [ -z "${nodhparam}" ]
+then
+	echo ' --- Generating dhparam key...'
+	openssl dhparam -out ${keysdir}/dhparam 4096
+	echo '... done.'
+else
+	echo ' --- The dhparam file is already exists. Skipping.'
+fi
+
+
+echo ' --- Everything`s done.'
+
+echo 'Goodluck.'
+echo 'Bye!'

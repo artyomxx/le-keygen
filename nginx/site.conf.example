@@ -1,0 +1,28 @@
+server {
+    listen 80;
+    server_name site.com;
+
+    access_log off;
+    charset utf8;
+
+    root PATH_TO_SITE_FILES;
+    include PATH_TO_THIS_DIR/ssl-challenges.conf;
+
+    location / {
+        rewrite ^(.*)$ https://site.com$1 redirect;
+    }
+}
+
+server {
+    listen 443 ssl http2;
+    server_name site.com;
+
+    include PATH_TO_THIS_DIR/ssl-commons.conf;
+    
+    ssl_certificate PATH_TO_KEYS/site.com.crt;
+    ssl_certificate_key PATH_TO_KEYS/site.com.key;
+    
+    root PATH_TO_SITE_FILES;
+    
+    ... 
+}

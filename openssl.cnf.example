@@ -1,0 +1,66 @@
+dir = .
+
+[ req_distinguished_name ]
+# Variable name			Prompt string
+#-------------------------	----------------------------------
+0.organizationName		= Your Organization Name
+organizationalUnitName		= -
+emailAddress			= email@site.com
+emailAddress_max		= 40
+localityName			= New York City
+stateOrProvinceName		= NY
+countryName			= US
+countryName_min			= 2
+countryName_max			= 2
+commonName			= _
+commonName_max			= 64
+
+# Default values for the above, for consistency and less typing.
+# Variable name			Value
+#------------------------	------------------------------
+0.organizationName_default	= Your Organization Name
+localityName_default		= New York City
+stateOrProvinceName_default	= NY
+countryName_default		= US
+
+[ ca ]
+default_ca		= CA_default
+
+[ CA_default ]
+#serial			= $dir/serial
+#database		= $dir/certindex.txt
+#new_certs_dir		= $dir/certs
+#certificate		= $dir/cacert.pem
+#private_key		= $dir/private/cakey.pem
+default_days		= 365
+default_md		= md5
+preserve		= no
+email_in_dn		= no
+nameopt			= default_ca
+certopt			= default_ca
+policy			= policy_match
+
+[ policy_match ]
+countryName		= match
+stateOrProvinceName	= match
+organizationName	= match
+organizationalUnitName	= optional
+commonName		= supplied
+emailAddress		= optional
+
+[ req ]
+default_bits		= 4096		# Size of keys
+default_keyfile		= key.pem	# name of generated keys
+default_md		= md5		# message digest algorithm
+string_mask		= nombstr	# permitted characters
+distinguished_name	= req_distinguished_name
+req_extensions		= v3_req
+
+[ v3_ca ]
+basicConstraints	= CA:TRUE
+subjectKeyIdentifier	= hash
+authorityKeyIdentifier	= keyid:always,issuer:always
+
+[ v3_req ]
+basicConstraints	= CA:FALSE
+subjectKeyIdentifier	= hash

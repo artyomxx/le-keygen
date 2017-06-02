@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+bash ./keygen \
+    --account-key="./keys/account.key" \
+    --acmetiny="./acme_tiny/" \
+    --keys="./keys/" \
+    --challenges="/tmp/challenges/" \
+    --domain1="site.com" \
+#    --no-questions
