@@ -28,7 +28,7 @@ I've included [NGinx config examples](nginx) as well.
 
 - **--domain1**
 
-   The ain domain name.
+   The main domain name.
 
 - **--domain2**
 
@@ -39,7 +39,7 @@ I've included [NGinx config examples](nginx) as well.
 - **--keyname**
 
    The basename for the key and certificate files.
-   If not specified — domain name will be used.
+   If not specified — the main domain name will be used.
 
 - **--nodhparam**
 
@@ -48,4 +48,4 @@ I've included [NGinx config examples](nginx) as well.
 - **--no-questions**
 
    Don't ask questions.
-   Use it if you put this script in crontab.
+   Use it if you use this script with crontab, etc.
